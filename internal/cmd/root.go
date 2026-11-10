@@ -123,6 +123,12 @@ func Execute(args []string) (err error) {
 }
 
 func executeWithRuntime(args []string, runtime *app.Runtime) (err error) {
+	return executeWithRuntimeContext(context.Background(), args, runtime)
+}
+
+// executeWithRuntimeContext runs a command under base, so an embedding
+// program (ExecuteIO) can cancel it.
+func executeWithRuntimeContext(base context.Context, args []string, runtime *app.Runtime) (err error) {
 	var kctx *kong.Context
 	runtime = normalizedRuntime(runtime)
 	runtimeIO := runtime.IO
@@ -258,8 +264,7 @@ func executeWithRuntime(args []string, runtime *app.Runtime) (err error) {
 		runtime.IO.Out = output
 	}
 
-	ctx := context.Background()
-	ctx = app.WithRuntime(ctx, runtime)
+	ctx := app.WithRuntime(base, runtime)
 	ctx = googleapi.WithReadOnly(ctx, cli.ReadOnly)
 	if cli.NoInput || !stdinIsTerminal(ctx) {
 		ctx = googleapi.WithNoInput(ctx)
